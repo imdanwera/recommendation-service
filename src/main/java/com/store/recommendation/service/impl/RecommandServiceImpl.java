@@ -24,6 +24,9 @@ public class RecommandServiceImpl implements RecommandService {
     @Autowired
     private DiscoveryClient discoveryClient;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     @Override
     public List<ProductDTO> getProductAccessories(String accessoryType) {
 
@@ -37,12 +40,17 @@ public class RecommandServiceImpl implements RecommandService {
         String contextPath = "/api/inventory/accessory";
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseURL+contextPath).queryParam("accstype", accessoryType);
 
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<List<ProductDTO>> productList =
                 restTemplate.exchange(builder.toUriString(), HttpMethod.GET, getHeader(), new ParameterizedTypeReference<List<ProductDTO>>() {});
 
         productList.getBody().stream().forEach(productDTO -> System.out.println(productDTO.getProductName()));
+        /*try {
+            Thread.sleep(6500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
 
+        //throw new RuntimeException();
         return productList.getBody();
     }
 
