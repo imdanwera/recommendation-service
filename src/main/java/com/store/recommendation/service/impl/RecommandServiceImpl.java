@@ -11,9 +11,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class RecommandServiceImpl implements RecommandService {
@@ -28,17 +31,22 @@ public class RecommandServiceImpl implements RecommandService {
     private RestTemplate restTemplate;
 
     @Override
-    public List<ProductDTO> getProductAccessories(String accessoryType) {
+    public List<ProductDTO> getProductAccessories(String type) {
 
         // Get Instance through load balancer
-        //ServiceInstance serviceInstance = loadBalancerClient.choose("INVENTORY-SERVICE");
+        ServiceInstance serviceInstance = loadBalancerClient.choose("INVENTORY-SERVICE");
 
-        List<ServiceInstance> instances = discoveryClient.getInstances("INVENTORY-SERVICE");
-        ServiceInstance serviceInstance = instances.get(0);
+        // Get Instance through discovery client
+        /*List<ServiceInstance> instances = discoveryClient.getInstances("INVENTORY-SERVICE");
+        ServiceInstance serviceInstance = instances.get(0);*/
 
         String baseURL = serviceInstance.getUri().toString();
-        String contextPath = "/api/inventory/accessory";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseURL+contextPath).queryParam("accstype", accessoryType);
+        String contextPath = String.format("/api/inventories/{type}/accessories", type);
+
+        Map<String,String> urlParam = new HashMap<>();
+        urlParam.put("type", type);
+
+        UriComponents builder = UriComponentsBuilder.fromHttpUrl(baseURL+contextPath).buildAndExpand(urlParam);
 
         ResponseEntity<List<ProductDTO>> productList =
                 restTemplate.exchange(builder.toUriString(), HttpMethod.GET, getHeader(), new ParameterizedTypeReference<List<ProductDTO>>() {});
